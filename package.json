@@ -1,0 +1,34 @@
+{
+  "name": "clockwork",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clock In / Clock Out time tracking for freelancers — clients, rates, billable hours, invoicing exports.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "next": "^15.5.25",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "eslint": "^9.26.0",
+    "eslint-config-next": "^15.5.25",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.23.13",
+    "typescript": "^5.8.3"
+  }
+}

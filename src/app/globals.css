@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind v4 configuration lives in CSS, not a JS config file.
+ * `@theme` entries become real design tokens AND utility classes:
+ * `--color-surface` gives you `bg-surface`, `text-surface`, `border-surface`.
+ */
+
+/* Class-based dark mode: we toggle `.dark` on <html> ourselves so the user can
+   override the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+
+  --color-canvas: #f7f7f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f2f6;
+  --color-line: #e3e5eb;
+  --color-ink: #14161c;
+  --color-ink-muted: #6b7280;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eef0ff;
+  --color-positive: #0f9d58;
+  --color-danger: #dc2626;
+}
+
+/* Only the token VALUES change in dark mode — every component keeps using
+   `bg-surface`/`text-ink` and simply looks right in both themes. */
+.dark {
+  --color-canvas: #0b0d12;
+  --color-surface: #14171f;
+  --color-surface-muted: #1b1f29;
+  --color-line: #262b36;
+  --color-ink: #eef1f6;
+  --color-ink-muted: #98a0b0;
+  --color-accent: #818cf8;
+  --color-accent-soft: #1e2140;
+  --color-positive: #34d399;
+  --color-danger: #f87171;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* One focus style for the whole app, applied where it belongs. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Tabular figures stop the running clock from jittering as digits change. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
