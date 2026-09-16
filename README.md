@@ -14,13 +14,12 @@ npm run typecheck
 
 | Route | What's on it |
 | --- | --- |
-| `/` | The clock, alone. Status, elapsed time, live earnings, one primary button, and the client / project / task fields. Nothing else. |
-| `/timesheet` | Totals, per-client breakdown, filters, the editable log, CSV + PDF export — behind a sticky bar that keeps the running clock visible and stoppable. |
+| `/` | For ease of use, the main page highlights the most important component, the punching in/out button. |
+| `/timesheet` | The second page displays a "Time Invested" dashboard with total money earned over multiple time spans (Today, This week, This Month). Followed by some other helpful information like total by client, and a history of previously recorded entries. The previously recorded entries segment allows for creating invoices at the click of a button and exporting them as a PDF. |
 
 The tracker lives in the **root layout**, which App Router keeps mounted across
 client-side navigation. Moving between the two screens never unmounts the timer,
 re-reads storage, or drops a second.
-
 ## What it does
 
 - **One clock.** Start / pause / resume / stop, with a live seconds counter and live earnings.
