@@ -104,13 +104,19 @@ export function ClockScreen() {
   const status = isRunning ? 'On the clock' : activeEntry ? 'Paused' : 'Off the clock';
 
   return (
-    <div className="flex min-h-screen flex-col px-4 py-5 sm:px-6">
-      <header className="mx-auto flex w-full max-w-xl items-center justify-between">
+    // h-[100dvh] + overflow-y-auto rather than min-h-screen: the page is sized
+    // to FIT the viewport (every element below scales with clamp()s tied to
+    // vh), so scrolling is never needed in practice. overflow-y-auto stays on
+    // only as a safety net for an extreme case (huge zoom, a tiny window) —
+    // it never triggers under normal use, it just stops content from being
+    // truly unreachable if it ever does.
+    <div className="flex h-[100dvh] flex-col overflow-y-auto px-4 py-3 sm:px-6 sm:py-4">
+      <header className="mx-auto flex w-full max-w-xl shrink-0 items-center justify-between">
         <span className="text-sm font-semibold tracking-tight text-ink">Clockwork</span>
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8 py-10">
+      <main className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col justify-center gap-[clamp(1.25rem,4vh,2rem)] py-[clamp(0.5rem,2.5vh,1.5rem)]">
         {/* --- the clock face --- */}
         <div className="text-center">
           <p className="flex items-center justify-center gap-2 text-xs font-medium tracking-[0.14em] text-ink-muted uppercase">
@@ -121,8 +127,13 @@ export function ClockScreen() {
             {status}
           </p>
 
+          {/* clamp(min, vh-scaled, max) instead of a fixed text-6xl/7xl: the
+              digits are the single biggest thing on the page, so they are what
+              gives a short window (a small laptop, a landscape phone) its room
+              back. The max matches the old sm:text-7xl exactly, so nothing
+              shrinks on a normal-height screen. */}
           <p
-            className="tabular mt-4 text-6xl leading-none font-semibold tracking-tight text-ink sm:text-7xl"
+            className="tabular mt-[clamp(0.5rem,2vh,1rem)] text-[clamp(2.75rem,9vh,4.5rem)] leading-none font-semibold tracking-tight text-ink"
             aria-label={`Elapsed time ${formatHMS(elapsedSeconds)}`}
           >
             {isHydrated ? formatHMS(elapsedSeconds) : '00:00:00'}
@@ -230,13 +241,15 @@ export function ClockScreen() {
         </div>
       </main>
 
-      {/* The one way out of this screen — accented and sized so it reads as a
-          real destination, but tinted rather than solid so it never competes
-          with Clock in for the eye. */}
-      <footer className="mx-auto w-full max-w-xl pb-2 text-center">
+      {/* The one way out of this screen. `shrink-0` keeps it pinned at its
+          full size even if something above ever runs tight on room — it is
+          the one element on this page that must never be what gets squeezed
+          out of view. Bigger and easier to hit than before; still tinted
+          rather than solid so it doesn't compete with Clock in for the eye. */}
+      <footer className="mx-auto w-full max-w-xl shrink-0 pt-2 pb-3 text-center">
         <Link
           href="/timesheet"
-          className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-6 py-3.5 text-base font-semibold text-accent transition hover:border-accent/60 hover:brightness-[0.98]"
+          className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-6 py-4 text-lg font-semibold text-accent transition hover:border-accent/60 hover:brightness-[0.98]"
         >
           Timesheet &amp; invoicing
           <span aria-hidden>→</span>

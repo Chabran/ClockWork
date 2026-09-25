@@ -9,7 +9,7 @@ import { ROUNDING_LABELS } from '@/lib/time/rounding';
 import { ROUNDING_RULES, SORT_ORDERS, type RoundingRule, type SortOrder } from '@/lib/types';
 import { exportCsv } from '@/lib/export/csv';
 import { groupIntoInvoices } from '@/lib/export/invoices';
-import { exportInvoices } from '@/lib/export/pdf';
+import { InvoiceExportDialog } from '@/components/InvoiceExportDialog';
 
 /**
  * Filter, sort and export — collapsed into one button.
@@ -37,7 +37,7 @@ export function FiltersBar() {
     projectsForClient,
   } = useTracker();
   const [isOpen, setIsOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Close on outside click and on Escape — the two things every popover owes
@@ -108,18 +108,7 @@ export function FiltersBar() {
       ? `${format(new Date(filters.from), 'd MMM')} – ${format(new Date(filters.to), 'd MMM yyyy')}`
       : 'All time';
 
-  const handlePdf = async () => {
-    setIsExporting(true);
-    try {
-      await exportInvoices(
-        groupIntoInvoices(filteredEntries),
-        { settings, rule: settings.roundingRule, periodLabel },
-        'combined',
-      );
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const drafts = groupIntoInvoices(filteredEntries);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -312,13 +301,22 @@ export function FiltersBar() {
         </Button>
         <Button
           variant="primary"
-          onClick={handlePdf}
-          disabled={filteredEntries.length === 0 || isExporting}
+          onClick={() => setIsExportDialogOpen(true)}
+          disabled={filteredEntries.length === 0}
           className="px-3 py-1.5 text-xs"
         >
-          {isExporting ? 'Building…' : 'Export PDF'}
+          Export PDF…
         </Button>
       </div>
+
+      <InvoiceExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        drafts={drafts}
+        settings={settings}
+        rule={settings.roundingRule}
+        periodLabel={periodLabel}
+      />
     </div>
   );
 }
