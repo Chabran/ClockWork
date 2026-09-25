@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { InvoiceRenderer } from '@/components/invoices/InvoiceRenderer';
+import { ScaledInvoicePreview } from '@/components/invoices/ScaledInvoicePreview';
 import { TEMPLATE_LIST } from '@/components/invoices/templates';
 import { DEFAULT_TEMPLATE_COLORS, TEMPLATE_COLOR_FIELDS, type ColorScheme } from '@/components/invoices/colors';
 import { loadColorPreset, loadLastTemplate, saveColorPreset, saveLastTemplate } from '@/components/invoices/templatePrefs';
@@ -158,8 +158,12 @@ export function InvoiceExportDialog({
           </button>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-2">
-          <div className="space-y-4 overflow-y-auto pr-1">
+        {/* One shared scroll on mobile (everything stacks, nothing gets a
+            second nested scrollbar) — two independently-scrolling panes
+            side by side from `lg` up, so a long invoice list doesn't push
+            the preview out of view on a wide screen. */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
+          <div className="space-y-4 lg:overflow-y-auto lg:pr-1">
             {/* One PDF per client/project/currency combination, so the user picks
                 exactly what goes out rather than always shipping everything. */}
             <div className="space-y-1.5">
@@ -322,13 +326,13 @@ export function InvoiceExportDialog({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col">
+          <div className="flex min-h-0 flex-col lg:overflow-hidden">
             <span className="mb-1.5 text-xs font-medium tracking-wide text-ink-muted uppercase">
               Preview
             </span>
-            <div className="flex-1 overflow-auto rounded-xl border border-line bg-surface-muted p-4">
+            <div className="rounded-xl border border-line bg-surface-muted p-3 lg:flex-1 lg:overflow-auto lg:p-4">
               {previewData ? (
-                <InvoiceRenderer templateId={templateId} data={previewData} colors={colors} />
+                <ScaledInvoicePreview templateId={templateId} data={previewData} colors={colors} />
               ) : (
                 <p className="p-6 text-center text-sm text-ink-muted">Nothing to preview.</p>
               )}
@@ -336,9 +340,16 @@ export function InvoiceExportDialog({
           </div>
         </div>
 
-        <footer className="mt-4 flex justify-end gap-2 border-t border-line pt-4">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleExport} disabled={chosen.length === 0 || isExporting}>
+        <footer className="mt-4 flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:justify-end">
+          <Button className="w-full sm:w-auto" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            className="w-full sm:w-auto"
+            variant="primary"
+            onClick={handleExport}
+            disabled={chosen.length === 0 || isExporting}
+          >
             {isExporting
               ? 'Building…'
               : `Export ${chosen.length > 1 && mode === 'separate' ? `${chosen.length} invoices` : 'PDF'}`}
