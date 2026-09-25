@@ -116,7 +116,7 @@ export function ClockScreen() {
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col justify-center gap-[clamp(1.25rem,4vh,2rem)] py-[clamp(0.5rem,2.5vh,1.5rem)]">
+      <main className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col justify-center gap-[clamp(1.25rem,4vh,2rem)] overflow-y-auto py-[clamp(0.5rem,2.5vh,1.5rem)]">
         {/* --- the clock face --- */}
         <div className="text-center">
           <p className="flex items-center justify-center gap-2 text-xs font-medium tracking-[0.14em] text-ink-muted uppercase">
