@@ -27,9 +27,6 @@ export type ExportMode = 'separate' | 'combined';
  * jsPDF is ~350 KB, so it is imported dynamically: the cost is paid only by the
  * users who actually click Export, not by everyone who loads the dashboard.
  * The `import type` lines above are erased at build time and pull in nothing.
- *
- * Several `separate` downloads in a row can trigger the browser's "allow
- * multiple downloads?" prompt the first time.
  */
 export async function exportInvoices(
   drafts: InvoiceDraft[],
@@ -52,6 +49,17 @@ export async function exportInvoices(
     return;
   }
 
+  /**
+   * Several `doc.save()` calls in a row are several browser downloads in a
+   * row, and Chrome (and others) silently blocks everything after the first
+   * one unless the user has already granted this site "automatic downloads" —
+   * there's no prompt to react to, the files just don't arrive. A .zip is one
+   * download, so it always goes through, and it's what "separate PDFs" meant
+   * anyway: distinct files, not one file per browser permission dialog.
+   */
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
+
   // Drafts differ by client, project OR currency, so two can share a label.
   // The currency is appended only on a clash, to keep the common name short.
   const usedNames = new Set<string>();
@@ -63,8 +71,23 @@ export async function exportInvoices(
     let name = invoiceFileName(label, date);
     if (usedNames.has(name)) name = invoiceFileName(`${label} ${draft.currency}`, date);
     usedNames.add(name);
-    doc.save(name);
+    zip.file(name, doc.output('arraybuffer'));
   }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  downloadBlob(blob, `invoices-${date}.zip`);
+}
+
+/** Triggers a browser download for a Blob without navigating away. */
+function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 /** Draws one invoice onto the first page of `doc`. Never saves. */

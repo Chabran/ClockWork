@@ -174,12 +174,13 @@ export function InvoiceExportDialog({
             )}
           >
             <span className="block font-medium">Separate PDFs</span>
-            <span className="block text-xs text-ink-muted">One file per invoice</span>
+            <span className="block text-xs text-ink-muted">One file per invoice, zipped</span>
           </button>
         </div>
         {mode === 'separate' && chosen.length > 1 ? (
           <p className="text-xs text-ink-muted">
-            Your browser may ask permission the first time it downloads several files at once.
+            Downloads as one .zip containing a PDF per invoice — browsers block several files
+            downloading at once, so this always arrives in one piece.
           </p>
         ) : null}
       </div>
