@@ -1,4 +1,5 @@
 import type { InvoiceData, TemplateId } from '@/types/invoice';
+import type { ColorScheme } from '@/components/invoices/colors';
 import { TEMPLATE_REGISTRY } from '@/components/invoices/templates';
 
 /**
@@ -10,8 +11,19 @@ import { TEMPLATE_REGISTRY } from '@/components/invoices/templates';
  * export as plain white. `templateId` falls back to `executive` if it's ever
  * something outside `TemplateId` (e.g. read from a URL param or stored data),
  * so a bad id renders a real invoice instead of a blank page.
+ *
+ * `colors` is optional and template-specific (each template has its own set
+ * of role names) — omit it and the template renders with its own defaults.
  */
-export function InvoiceRenderer({ templateId, data }: { templateId: TemplateId; data: InvoiceData }) {
+export function InvoiceRenderer({
+  templateId,
+  data,
+  colors,
+}: {
+  templateId: TemplateId;
+  data: InvoiceData;
+  colors?: ColorScheme;
+}) {
   const Template = TEMPLATE_REGISTRY[templateId] ?? TEMPLATE_REGISTRY.executive;
 
   return (
@@ -19,7 +31,7 @@ export function InvoiceRenderer({ templateId, data }: { templateId: TemplateId; 
       data-invoice-template={templateId}
       className="mx-auto w-[816px] max-w-full overflow-hidden bg-white text-black shadow-lg [-webkit-print-color-adjust:exact] [print-color-adjust:exact] print:w-full print:shadow-none"
     >
-      <Template data={data} />
+      <Template data={data} colors={colors} />
     </div>
   );
 }

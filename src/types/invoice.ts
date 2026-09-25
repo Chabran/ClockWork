@@ -15,10 +15,7 @@ export const TEMPLATE_IDS = [
   'neo-brutalist',
   'sidebar-split',
   'warm-editorial',
-  'tech-dark',
-  'corporate-slate',
   'vibrant-pop',
-  'monochromatic-grid',
   'luxe-gold',
 ] as const;
 
