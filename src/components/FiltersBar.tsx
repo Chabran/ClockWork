@@ -127,13 +127,21 @@ export function FiltersBar({
   const drafts = groupIntoInvoices(exportEntries);
 
   /**
-   * The dialog exists to let you choose BETWEEN invoices and between combined
-   * vs. separate — neither question has an answer to give when there is only
-   * one invoice on the table. So one draft (or zero) skips the dialog and
-   * downloads immediately; two or more is what the dialog is for.
+   * The dialog exists for two different reasons, and either one is enough to
+   * show it:
+   *  - there's more than one invoice draft, so "combined vs. separate" and
+   *    "which ones" are real questions with more than one answer, or
+   *  - the user hand-picked more than one row, so exporting is a deliberate
+   *    enough act that it deserves a look before it downloads, even if those
+   *    rows happen to collapse into a single draft (same client, same project).
+   * Neither is true — no selection, and the filtered view is already just one
+   * invoice — there's nothing to choose, so it downloads immediately.
    */
+  const hasMultiRowSelection = selectionActive && selectedCount > 1;
+  const shouldConfirmExport = drafts.length > 1 || hasMultiRowSelection;
+
   const handleExportPdf = async () => {
-    if (drafts.length > 1) {
+    if (shouldConfirmExport) {
       setIsExportDialogOpen(true);
       return;
     }
@@ -346,7 +354,7 @@ export function FiltersBar({
           disabled={exportEntries.length === 0 || isExporting}
           className="px-3 py-1.5 text-xs"
         >
-          {isExporting ? 'Building…' : drafts.length > 1 ? 'Export PDF…' : 'Export PDF'}
+          {isExporting ? 'Building…' : shouldConfirmExport ? 'Export PDF…' : 'Export PDF'}
         </Button>
       </div>
 

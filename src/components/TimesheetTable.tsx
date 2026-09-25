@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTracker } from '@/state/TrackerProvider';
 import { EntryEditorDialog } from '@/components/EntryEditorDialog';
 import { FiltersBar } from '@/components/FiltersBar';
-import { Badge, Button, Card, EmptyState } from '@/components/ui/primitives';
+import { Badge, Button, Card, EmptyState, cn } from '@/components/ui/primitives';
 import { formatDay, formatDuration, formatMoney, formatTimeOfDay } from '@/lib/time/format';
 import { toDecimalHours } from '@/lib/time/rounding';
 import type { EnrichedEntry } from '@/lib/types';
@@ -98,8 +98,17 @@ export function TimesheetTable() {
           <table className="hidden w-full text-sm md:table">
             <thead>
               <tr className="text-left text-xs tracking-wide text-ink-muted uppercase">
+                <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-5 py-3 font-medium">Client / Project</th>
+                <th className="px-5 py-3 font-medium">Job title</th>
+                <th className="px-5 py-3 text-right font-medium">Tracked</th>
+                <th className="px-5 py-3 text-right font-medium">Billed</th>
+                <th className="px-5 py-3 text-right font-medium">Amount</th>
+                <th className="px-5 py-3" />
+                {/* Rightmost, next to the actions it sits above — and closest,
+                    on the page, to the Select/Export buttons it feeds. */}
                 {selectionActive ? (
-                  <th className="w-10 px-5 py-3">
+                  <th className="w-10 px-5 py-3 text-right">
                     <input
                       type="checkbox"
                       checked={allVisibleSelected}
@@ -109,29 +118,25 @@ export function TimesheetTable() {
                     />
                   </th>
                 ) : null}
-                <th className="px-5 py-3 font-medium">Date</th>
-                <th className="px-5 py-3 font-medium">Client / Project</th>
-                <th className="px-5 py-3 font-medium">Job title</th>
-                <th className="px-5 py-3 text-right font-medium">Tracked</th>
-                <th className="px-5 py-3 text-right font-medium">Billed</th>
-                <th className="px-5 py-3 text-right font-medium">Amount</th>
-                <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody>
               {filteredEntries.map((entry) => (
-                <tr key={entry.id} className="border-t border-line align-top hover:bg-surface-muted/60">
-                  {selectionActive ? (
-                    <td className="px-5 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(entry.id)}
-                        onChange={() => toggleRow(entry.id)}
-                        aria-label={`Select entry from ${formatDay(entry.startTime)}`}
-                        className="size-4 accent-accent"
-                      />
-                    </td>
-                  ) : null}
+                <tr
+                  key={entry.id}
+                  onClick={(event) => {
+                    if (!selectionActive) return;
+                    // A click on a button/link inside the row (Edit, Delete…)
+                    // is that control's job, not a row-select toggle.
+                    if ((event.target as HTMLElement).closest('button, a, input')) return;
+                    toggleRow(entry.id);
+                  }}
+                  className={cn(
+                    'border-t border-line align-top hover:bg-surface-muted/60',
+                    selectionActive && 'cursor-pointer',
+                    selectedIds.has(entry.id) && 'bg-accent-soft/60',
+                  )}
+                >
                   <td className="px-5 py-3 whitespace-nowrap text-ink-muted">
                     <div className="text-ink">{formatDay(entry.startTime)}</div>
                     <div className="tabular text-xs">
@@ -181,6 +186,17 @@ export function TimesheetTable() {
                       onDelete={() => deleteEntry(entry.id)}
                     />
                   </td>
+                  {selectionActive ? (
+                    <td className="px-5 py-3 text-right">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(entry.id)}
+                        onChange={() => toggleRow(entry.id)}
+                        aria-label={`Select entry from ${formatDay(entry.startTime)}`}
+                        className="size-4 accent-accent"
+                      />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -202,40 +218,54 @@ export function TimesheetTable() {
           ) : null}
           <ul className="divide-y divide-line md:hidden">
             {filteredEntries.map((entry) => (
-              <li key={entry.id} className="space-y-2 p-4">
+              <li
+                key={entry.id}
+                onClick={(event) => {
+                  if (!selectionActive) return;
+                  if ((event.target as HTMLElement).closest('button, a, input')) return;
+                  toggleRow(entry.id);
+                }}
+                className={cn(
+                  'space-y-2 p-4',
+                  selectionActive && 'cursor-pointer',
+                  selectedIds.has(entry.id) && 'bg-accent-soft/60',
+                )}
+              >
                 <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Badge color={clients.find((c) => c.id === entry.clientId)?.color}>
+                      {entry.clientName}
+                    </Badge>
+                    <p className="mt-1.5 text-sm text-ink">{entry.description || '—'}</p>
+                    <p className="tabular text-xs text-ink-muted">
+                      {formatDay(entry.startTime)} · {formatTimeOfDay(entry.startTime)} –{' '}
+                      {formatTimeOfDay(entry.endTime)}
+                    </p>
+                  </div>
+                  {/* Right side, next to the numbers — same reasoning as the
+                      desktop table: closer to where Select and Export live. */}
                   <div className="flex items-start gap-2.5">
+                    <div className="text-right">
+                      <p className="tabular text-sm font-semibold text-ink">
+                        {formatDuration(entry.liveSeconds)}
+                      </p>
+                      <p className="tabular text-xs text-positive">
+                        {entry.isBillable ? formatMoney(entry.earnings, entry.currency) : '—'}
+                      </p>
+                      {entry.overtimeApplied ? (
+                        <p className="text-xs font-medium text-accent">
+                          {entry.overtimeApplied.hours} h OT ×{entry.overtimeApplied.multiplier}
+                        </p>
+                      ) : null}
+                    </div>
                     {selectionActive ? (
                       <input
                         type="checkbox"
                         checked={selectedIds.has(entry.id)}
                         onChange={() => toggleRow(entry.id)}
                         aria-label={`Select entry from ${formatDay(entry.startTime)}`}
-                        className="mt-1 size-4 shrink-0 accent-accent"
+                        className="mt-0.5 size-4 shrink-0 accent-accent"
                       />
-                    ) : null}
-                    <div>
-                      <Badge color={clients.find((c) => c.id === entry.clientId)?.color}>
-                        {entry.clientName}
-                      </Badge>
-                      <p className="mt-1.5 text-sm text-ink">{entry.description || '—'}</p>
-                      <p className="tabular text-xs text-ink-muted">
-                        {formatDay(entry.startTime)} · {formatTimeOfDay(entry.startTime)} –{' '}
-                        {formatTimeOfDay(entry.endTime)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="tabular text-sm font-semibold text-ink">
-                      {formatDuration(entry.liveSeconds)}
-                    </p>
-                    <p className="tabular text-xs text-positive">
-                      {entry.isBillable ? formatMoney(entry.earnings, entry.currency) : '—'}
-                    </p>
-                    {entry.overtimeApplied ? (
-                      <p className="text-xs font-medium text-accent">
-                        {entry.overtimeApplied.hours} h OT ×{entry.overtimeApplied.multiplier}
-                      </p>
                     ) : null}
                   </div>
                 </div>
