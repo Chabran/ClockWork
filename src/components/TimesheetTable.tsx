@@ -21,7 +21,36 @@ export function TimesheetTable() {
     useTracker();
   const [editing, setEditing] = useState<EnrichedEntry | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectionActive, setSelectionActive] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const currency = clients[0]?.currency ?? settings.defaultCurrency;
+
+  // Selecting is opt-in and scoped to what's on screen: leaving select mode
+  // drops the selection rather than leaving it lying around stale, and a
+  // filter change never leaves a phantom count for a row you can no longer see.
+  const toggleSelection = () => {
+    setSelectionActive((active) => !active);
+    setSelectedIds(new Set());
+  };
+  const toggleRow = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const visibleSelected = filteredEntries.filter((entry) => selectedIds.has(entry.id));
+  const allVisibleSelected =
+    selectionActive && filteredEntries.length > 0 && visibleSelected.length === filteredEntries.length;
+  const toggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(filteredEntries.map((e) => e.id)));
+  };
+
+  // Exporting a hand-picked selection exports exactly those rows; otherwise
+  // (selection off, or on with nothing checked yet) it's every filtered row —
+  // the export buttons work the same whether or not selection is in play.
+  const exportEntries = selectionActive && visibleSelected.length > 0 ? visibleSelected : filteredEntries;
 
   return (
     <Card className="p-0">
@@ -48,7 +77,12 @@ export function TimesheetTable() {
       {/* One slim toolbar instead of a wall of controls: the panel opens over the
           table rather than pushing it down the page. */}
       <div className="border-b border-line px-5 py-3">
-        <FiltersBar />
+        <FiltersBar
+          exportEntries={exportEntries}
+          selectionActive={selectionActive}
+          selectedCount={visibleSelected.length}
+          onToggleSelection={toggleSelection}
+        />
       </div>
 
       {filteredEntries.length === 0 ? (
@@ -64,6 +98,17 @@ export function TimesheetTable() {
           <table className="hidden w-full text-sm md:table">
             <thead>
               <tr className="text-left text-xs tracking-wide text-ink-muted uppercase">
+                {selectionActive ? (
+                  <th className="w-10 px-5 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all visible entries"
+                      className="size-4 accent-accent"
+                    />
+                  </th>
+                ) : null}
                 <th className="px-5 py-3 font-medium">Date</th>
                 <th className="px-5 py-3 font-medium">Client / Project</th>
                 <th className="px-5 py-3 font-medium">Job title</th>
@@ -76,6 +121,17 @@ export function TimesheetTable() {
             <tbody>
               {filteredEntries.map((entry) => (
                 <tr key={entry.id} className="border-t border-line align-top hover:bg-surface-muted/60">
+                  {selectionActive ? (
+                    <td className="px-5 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(entry.id)}
+                        onChange={() => toggleRow(entry.id)}
+                        aria-label={`Select entry from ${formatDay(entry.startTime)}`}
+                        className="size-4 accent-accent"
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-5 py-3 whitespace-nowrap text-ink-muted">
                     <div className="text-ink">{formatDay(entry.startTime)}</div>
                     <div className="tabular text-xs">
@@ -131,19 +187,43 @@ export function TimesheetTable() {
           </table>
 
           {/* Mobile */}
+          {selectionActive ? (
+            <div className="flex items-center justify-between border-b border-line px-4 py-2 md:hidden">
+              <label className="flex items-center gap-2 text-xs font-medium text-ink-muted">
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAll}
+                  className="size-4 accent-accent"
+                />
+                Select all
+              </label>
+            </div>
+          ) : null}
           <ul className="divide-y divide-line md:hidden">
             {filteredEntries.map((entry) => (
               <li key={entry.id} className="space-y-2 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <Badge color={clients.find((c) => c.id === entry.clientId)?.color}>
-                      {entry.clientName}
-                    </Badge>
-                    <p className="mt-1.5 text-sm text-ink">{entry.description || '—'}</p>
-                    <p className="tabular text-xs text-ink-muted">
-                      {formatDay(entry.startTime)} · {formatTimeOfDay(entry.startTime)} –{' '}
-                      {formatTimeOfDay(entry.endTime)}
-                    </p>
+                  <div className="flex items-start gap-2.5">
+                    {selectionActive ? (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(entry.id)}
+                        onChange={() => toggleRow(entry.id)}
+                        aria-label={`Select entry from ${formatDay(entry.startTime)}`}
+                        className="mt-1 size-4 shrink-0 accent-accent"
+                      />
+                    ) : null}
+                    <div>
+                      <Badge color={clients.find((c) => c.id === entry.clientId)?.color}>
+                        {entry.clientName}
+                      </Badge>
+                      <p className="mt-1.5 text-sm text-ink">{entry.description || '—'}</p>
+                      <p className="tabular text-xs text-ink-muted">
+                        {formatDay(entry.startTime)} · {formatTimeOfDay(entry.startTime)} –{' '}
+                        {formatTimeOfDay(entry.endTime)}
+                      </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="tabular text-sm font-semibold text-ink">

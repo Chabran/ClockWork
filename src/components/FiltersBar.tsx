@@ -9,7 +9,9 @@ import { ROUNDING_LABELS } from '@/lib/time/rounding';
 import { ROUNDING_RULES, SORT_ORDERS, type RoundingRule, type SortOrder } from '@/lib/types';
 import { exportCsv } from '@/lib/export/csv';
 import { groupIntoInvoices } from '@/lib/export/invoices';
+import { exportInvoices } from '@/lib/export/pdf';
 import { InvoiceExportDialog } from '@/components/InvoiceExportDialog';
+import type { EnrichedEntry } from '@/lib/types';
 
 /**
  * Filter, sort and export — collapsed into one button.
@@ -24,13 +26,26 @@ import { InvoiceExportDialog } from '@/components/InvoiceExportDialog';
  *
  * You can always see WHAT is filtering the table; you only open the panel to
  * change it.
+ *
+ * `exportEntries` defaults to every filtered row, but the table above can
+ * narrow it to a hand-picked selection — the export buttons never need to
+ * know which case they're in, they just export whatever they're handed.
  */
-export function FiltersBar() {
+export function FiltersBar({
+  exportEntries,
+  selectionActive,
+  selectedCount,
+  onToggleSelection,
+}: {
+  exportEntries: EnrichedEntry[];
+  selectionActive: boolean;
+  selectedCount: number;
+  onToggleSelection: () => void;
+}) {
   const {
     filters,
     setFilters,
     resetFilters,
-    filteredEntries,
     settings,
     updateSettings,
     clients,
@@ -38,6 +53,7 @@ export function FiltersBar() {
   } = useTracker();
   const [isOpen, setIsOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Close on outside click and on Escape — the two things every popover owes
@@ -108,7 +124,26 @@ export function FiltersBar() {
       ? `${format(new Date(filters.from), 'd MMM')} – ${format(new Date(filters.to), 'd MMM yyyy')}`
       : 'All time';
 
-  const drafts = groupIntoInvoices(filteredEntries);
+  const drafts = groupIntoInvoices(exportEntries);
+
+  /**
+   * The dialog exists to let you choose BETWEEN invoices and between combined
+   * vs. separate — neither question has an answer to give when there is only
+   * one invoice on the table. So one draft (or zero) skips the dialog and
+   * downloads immediately; two or more is what the dialog is for.
+   */
+  const handleExportPdf = async () => {
+    if (drafts.length > 1) {
+      setIsExportDialogOpen(true);
+      return;
+    }
+    setIsExporting(true);
+    try {
+      await exportInvoices(drafts, { settings, rule: settings.roundingRule, periodLabel }, 'combined');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -291,21 +326,27 @@ export function FiltersBar() {
         </span>
       ) : null}
 
-      <div className="ml-auto flex gap-2">
+      <div className="ml-auto flex items-center gap-2">
         <Button
-          onClick={() => exportCsv(filteredEntries, settings.roundingRule)}
-          disabled={filteredEntries.length === 0}
+          onClick={onToggleSelection}
+          className={cn('px-3 py-1.5 text-xs', selectionActive && 'border-accent text-accent')}
+        >
+          {selectionActive ? `${selectedCount} selected · Done` : 'Select'}
+        </Button>
+        <Button
+          onClick={() => exportCsv(exportEntries, settings.roundingRule)}
+          disabled={exportEntries.length === 0}
           className="px-3 py-1.5 text-xs"
         >
           Export CSV
         </Button>
         <Button
           variant="primary"
-          onClick={() => setIsExportDialogOpen(true)}
-          disabled={filteredEntries.length === 0}
+          onClick={handleExportPdf}
+          disabled={exportEntries.length === 0 || isExporting}
           className="px-3 py-1.5 text-xs"
         >
-          Export PDF…
+          {isExporting ? 'Building…' : drafts.length > 1 ? 'Export PDF…' : 'Export PDF'}
         </Button>
       </div>
 
