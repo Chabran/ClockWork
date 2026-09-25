@@ -69,8 +69,8 @@ export function TimesheetTable() {
             </span>
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsCreating(true)}>
-          + Add time
+        <Button variant="primary" className="ml-auto" onClick={() => setIsCreating(true)}>
+          + Manual entry
         </Button>
       </header>
 
@@ -94,6 +94,8 @@ export function TimesheetTable() {
         </div>
       ) : (
         <>
+          <h3 className="px-5 pt-4 text-sm font-semibold text-ink">Recorded Work Shifts</h3>
+
           {/* Desktop */}
           <table className="hidden w-full text-sm md:table">
             <thead>

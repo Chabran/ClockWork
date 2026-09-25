@@ -110,13 +110,13 @@ export function ClockScreen() {
     // only as a safety net for an extreme case (huge zoom, a tiny window) —
     // it never triggers under normal use, it just stops content from being
     // truly unreachable if it ever does.
-    <div className="flex h-[100dvh] flex-col overflow-y-auto px-4 py-3 sm:px-6 sm:py-4">
+    <div className="flex h-[100dvh] flex-col overflow-y-auto px-4 py-[clamp(0.5rem,1.5vh,1rem)] sm:px-6">
       <header className="mx-auto flex w-full max-w-xl shrink-0 items-center justify-between">
         <span className="text-sm font-semibold tracking-tight text-ink">Clockwork</span>
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col justify-center gap-[clamp(1.25rem,4vh,2rem)] overflow-y-auto py-[clamp(0.5rem,2.5vh,1.5rem)]">
+      <main className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col justify-center gap-[clamp(0.625rem,3vh,2rem)] overflow-y-auto py-[clamp(0.25rem,1.5vh,1.5rem)]">
         {/* --- the clock face --- */}
         <div className="text-center">
           <p className="flex items-center justify-center gap-2 text-xs font-medium tracking-[0.14em] text-ink-muted uppercase">
@@ -139,7 +139,7 @@ export function ClockScreen() {
             {isHydrated ? formatHMS(elapsedSeconds) : '00:00:00'}
           </p>
 
-          <p className="mt-3 text-sm text-ink-muted">
+          <p className="mt-[clamp(0.375rem,1.5vh,0.75rem)] text-sm text-ink-muted">
             {activeEntry && !activeEntry.isBillable ? (
               'Non-billable — tracked, not charged'
             ) : (
@@ -160,7 +160,7 @@ export function ClockScreen() {
               variant="primary"
               onClick={handleStart}
               disabled={!draftClientId || !isHydrated}
-              className="w-full max-w-xs justify-center py-4 text-base"
+              className="w-full max-w-xs justify-center py-[clamp(0.625rem,1.8vh,1rem)] text-base"
             >
               Clock in
             </Button>
@@ -168,14 +168,17 @@ export function ClockScreen() {
             <>
               <div className="flex w-full max-w-xs gap-2">
                 {isRunning ? (
-                  <Button onClick={pauseTimer} className="flex-1 justify-center py-4 text-base">
+                  <Button
+                    onClick={pauseTimer}
+                    className="flex-1 justify-center py-[clamp(0.625rem,1.8vh,1rem)] text-base"
+                  >
                     Pause
                   </Button>
                 ) : (
                   <Button
                     variant="primary"
                     onClick={resumeTimer}
-                    className="flex-1 justify-center py-4 text-base"
+                    className="flex-1 justify-center py-[clamp(0.625rem,1.8vh,1rem)] text-base"
                   >
                     Resume
                   </Button>
@@ -183,7 +186,7 @@ export function ClockScreen() {
                 <Button
                   variant="primary"
                   onClick={stopTimer}
-                  className="flex-1 justify-center py-4 text-base"
+                  className="flex-1 justify-center py-[clamp(0.625rem,1.8vh,1rem)] text-base"
                 >
                   Clock out
                 </Button>
@@ -196,7 +199,7 @@ export function ClockScreen() {
         </div>
 
         {/* --- who and what: quiet, but always editable --- */}
-        <div className="space-y-3 rounded-2xl border border-line bg-surface p-4">
+        <div className="space-y-[clamp(0.5rem,1.5vh,0.75rem)] rounded-2xl border border-line bg-surface p-[clamp(0.625rem,2vh,1rem)]">
           <ClientSelector
             showRate
             clientId={clientId}
@@ -246,10 +249,10 @@ export function ClockScreen() {
           the one element on this page that must never be what gets squeezed
           out of view. Bigger and easier to hit than before; still tinted
           rather than solid so it doesn't compete with Clock in for the eye. */}
-      <footer className="mx-auto w-full max-w-xl shrink-0 pt-2 pb-3 text-center">
+      <footer className="mx-auto w-full max-w-xl shrink-0 pt-[clamp(0.375rem,1vh,0.5rem)] pb-[clamp(0.5rem,1.5vh,0.75rem)] text-center">
         <Link
           href="/timesheet"
-          className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-6 py-4 text-lg font-semibold text-accent transition hover:border-accent/60 hover:brightness-[0.98]"
+          className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-6 py-[clamp(0.625rem,1.8vh,1rem)] text-lg font-semibold text-accent transition hover:border-accent/60 hover:brightness-[0.98]"
         >
           Timesheet &amp; invoicing
           <span aria-hidden>→</span>
