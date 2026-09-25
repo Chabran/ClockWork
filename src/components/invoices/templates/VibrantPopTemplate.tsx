@@ -35,7 +35,7 @@ export function VibrantPopTemplate({
       </div>
 
       <div className="relative z-10 mt-8 grid grid-cols-2 gap-6">
-        <div className="rounded-2xl border-l-4 border-[var(--c-primary)] bg-slate-50 p-5">
+        <div className="rounded-2xl border-l-4 border-[var(--c-primary)] bg-[#f8fafc] p-5">
           <p className="text-xs font-extrabold text-[var(--c-primary)] uppercase">From</p>
           <p className="mt-1 font-bold">{data.sender.name}</p>
           {data.sender.addressLines.map((line) => (
@@ -44,7 +44,7 @@ export function VibrantPopTemplate({
             </p>
           ))}
         </div>
-        <div className="rounded-2xl border-l-4 border-[var(--c-primary)] bg-slate-50 p-5">
+        <div className="rounded-2xl border-l-4 border-[var(--c-primary)] bg-[#f8fafc] p-5">
           <p className="text-xs font-extrabold text-[var(--c-primary)] uppercase">Billed to</p>
           <p className="mt-1 font-bold">{data.client.name}</p>
           {data.client.addressLines.map((line) => (
@@ -66,7 +66,7 @@ export function VibrantPopTemplate({
         </thead>
         <tbody>
           {data.lineItems.map((item) => (
-            <tr key={item.id} className="border-b border-slate-100">
+            <tr key={item.id} className="border-b border-[#f1f5f9]">
               <td className="px-4 py-4 font-medium">{item.description}</td>
               <td className="px-4 py-4 text-right opacity-60">{item.quantity}</td>
               <td className="px-4 py-4 text-right opacity-60">{formatMoney(item.unitPrice, data.currency)}</td>

@@ -8,9 +8,13 @@ import { SORT_LABELS } from '@/lib/selectors';
 import { ROUNDING_LABELS } from '@/lib/time/rounding';
 import { ROUNDING_RULES, SORT_ORDERS, type RoundingRule, type SortOrder } from '@/lib/types';
 import { exportCsv } from '@/lib/export/csv';
-import { groupIntoInvoices } from '@/lib/export/invoices';
-import { exportInvoices } from '@/lib/export/pdf';
+import { groupIntoInvoices, type InvoiceDraft } from '@/lib/export/invoices';
+import type { ExportMode } from '@/lib/export/pdf';
+import { buildInvoiceDataList } from '@/lib/export/invoice-adapter';
+import { exportTemplatedInvoices } from '@/lib/export/templated-pdf';
 import { InvoiceExportDialog } from '@/components/InvoiceExportDialog';
+import { TemplatePickerDialog } from '@/components/invoices/TemplatePickerDialog';
+import type { InvoiceData, TemplateId } from '@/types/invoice';
 import type { EnrichedEntry } from '@/lib/types';
 
 /**
@@ -53,7 +57,8 @@ export function FiltersBar({
   } = useTracker();
   const [isOpen, setIsOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
+  const [pickerItems, setPickerItems] = useState<InvoiceData[]>([]);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Close on outside click and on Escape — the two things every popover owes
@@ -140,17 +145,26 @@ export function FiltersBar({
   const hasMultiRowSelection = selectionActive && selectedCount > 1;
   const shouldConfirmExport = drafts.length > 1 || hasMultiRowSelection;
 
-  const handleExportPdf = async () => {
+  // Every export now stops at the template picker — there is no path that
+  // downloads a PDF without the user seeing (and being able to change) which
+  // design it renders in, whether or not the invoice-selection dialog above
+  // was needed first.
+  const openTemplatePicker = (chosen: InvoiceDraft[], mode: ExportMode) => {
+    setPickerItems(buildInvoiceDataList(chosen, mode, { settings, rule: settings.roundingRule, periodLabel }));
+    setIsExportDialogOpen(false);
+    setIsTemplatePickerOpen(true);
+  };
+
+  const handleExportPdf = () => {
     if (shouldConfirmExport) {
       setIsExportDialogOpen(true);
       return;
     }
-    setIsExporting(true);
-    try {
-      await exportInvoices(drafts, { settings, rule: settings.roundingRule, periodLabel }, 'combined');
-    } finally {
-      setIsExporting(false);
-    }
+    openTemplatePicker(drafts, 'combined');
+  };
+
+  const handleTemplateExport = async (templateId: TemplateId) => {
+    await exportTemplatedInvoices(pickerItems, templateId);
   };
 
   return (
@@ -351,10 +365,10 @@ export function FiltersBar({
         <Button
           variant="primary"
           onClick={handleExportPdf}
-          disabled={exportEntries.length === 0 || isExporting}
+          disabled={exportEntries.length === 0}
           className="px-3 py-1.5 text-xs"
         >
-          {isExporting ? 'Building…' : shouldConfirmExport ? 'Export PDF…' : 'Export PDF'}
+          Export PDF…
         </Button>
       </div>
 
@@ -362,9 +376,14 @@ export function FiltersBar({
         open={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
         drafts={drafts}
-        settings={settings}
-        rule={settings.roundingRule}
-        periodLabel={periodLabel}
+        onContinue={openTemplatePicker}
+      />
+
+      <TemplatePickerDialog
+        open={isTemplatePickerOpen}
+        onClose={() => setIsTemplatePickerOpen(false)}
+        items={pickerItems}
+        onExport={handleTemplateExport}
       />
     </div>
   );

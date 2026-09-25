@@ -5,9 +5,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button, cn } from '@/components/ui/primitives';
 import { sumEntries } from '@/lib/selectors';
 import { formatMoney } from '@/lib/time/format';
-import { exportInvoices, type ExportMode } from '@/lib/export/pdf';
+import type { ExportMode } from '@/lib/export/pdf';
 import { invoiceLabel, type InvoiceDraft } from '@/lib/export/invoices';
-import type { RoundingRule, Settings } from '@/lib/types';
 
 /**
  * Lets the user choose which draft invoices to export, and whether they land
@@ -15,25 +14,24 @@ import type { RoundingRule, Settings } from '@/lib/types';
  *
  * Every draft starts selected — exporting everything you were already looking
  * at is the common case, so the dialog opens ready to go rather than empty.
+ *
+ * This dialog only decides WHICH invoices and WHICH mode — it hands that off
+ * to `onContinue` rather than building a PDF itself, so the template picker
+ * (which design to render them in) always comes next, never bypassed.
  */
 export function InvoiceExportDialog({
   open,
   onClose,
   drafts,
-  settings,
-  rule,
-  periodLabel,
+  onContinue,
 }: {
   open: boolean;
   onClose: () => void;
   drafts: InvoiceDraft[];
-  settings: Settings;
-  rule: RoundingRule;
-  periodLabel: string;
+  onContinue: (chosen: InvoiceDraft[], mode: ExportMode) => void;
 }) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(drafts.map((d) => d.key)));
   const [mode, setMode] = useState<ExportMode>('combined');
-  const [isExporting, setIsExporting] = useState(false);
 
   // Re-select everything on each open: the underlying entries can have
   // changed (a filter, an edit) since the dialog last closed, and a stale
@@ -55,15 +53,9 @@ export function InvoiceExportDialog({
   const chosen = drafts.filter((draft) => selected.has(draft.key));
   const allSelected = chosen.length === drafts.length && drafts.length > 0;
 
-  const handleExport = async () => {
+  const handleContinue = () => {
     if (chosen.length === 0) return;
-    setIsExporting(true);
-    try {
-      await exportInvoices(chosen, { settings, rule, periodLabel }, mode);
-      onClose();
-    } finally {
-      setIsExporting(false);
-    }
+    onContinue(chosen, mode);
   };
 
   return (
@@ -74,14 +66,8 @@ export function InvoiceExportDialog({
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button
-            variant="primary"
-            onClick={handleExport}
-            disabled={chosen.length === 0 || isExporting}
-          >
-            {isExporting
-              ? 'Building…'
-              : `Export ${chosen.length} ${chosen.length === 1 ? 'invoice' : 'invoices'}`}
+          <Button variant="primary" onClick={handleContinue} disabled={chosen.length === 0}>
+            {`Continue with ${chosen.length} ${chosen.length === 1 ? 'invoice' : 'invoices'}`}
           </Button>
         </>
       }
@@ -184,6 +170,10 @@ export function InvoiceExportDialog({
           </p>
         ) : null}
       </div>
+
+      <p className="border-t border-line pt-3 text-xs text-ink-muted">
+        Next: pick which template these invoices export in, with a live preview.
+      </p>
     </Modal>
   );
 }

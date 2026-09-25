@@ -23,7 +23,7 @@ export function SidebarSplitTemplate({
   return (
     <div
       style={style}
-      className="grid min-h-[1056px] grid-cols-12 bg-[var(--c-canvas)] font-sans text-slate-900"
+      className="grid min-h-[1056px] grid-cols-12 bg-[var(--c-canvas)] font-sans text-[#0f172a]"
     >
       <div className="col-span-4 flex flex-col justify-between bg-[var(--c-sidebar)] p-8 text-[var(--c-sidebarText)]">
         <div>
@@ -87,10 +87,10 @@ export function SidebarSplitTemplate({
             </thead>
             <tbody>
               {data.lineItems.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100">
+                <tr key={item.id} className="border-b border-[#f1f5f9]">
                   <td className="px-3 py-3">{item.description}</td>
-                  <td className="px-3 py-3 text-right text-slate-500">{item.quantity}</td>
-                  <td className="px-3 py-3 text-right text-slate-500">
+                  <td className="px-3 py-3 text-right text-[#64748b]">{item.quantity}</td>
+                  <td className="px-3 py-3 text-right text-[#64748b]">
                     {formatMoney(item.unitPrice, data.currency)}
                   </td>
                   <td className="px-3 py-3 text-right font-medium">{formatMoney(item.total, data.currency)}</td>
@@ -101,16 +101,16 @@ export function SidebarSplitTemplate({
         </div>
 
         <div className="ml-auto w-1/2 space-y-2">
-          <div className="flex justify-between text-sm text-slate-500">
+          <div className="flex justify-between text-sm text-[#64748b]">
             <span>Subtotal</span>
             <span>{formatMoney(data.subtotal, data.currency)}</span>
           </div>
-          <div className="flex justify-between text-sm text-slate-500">
+          <div className="flex justify-between text-sm text-[#64748b]">
             <span>Tax ({data.taxRate}%)</span>
             <span>{formatMoney(data.taxAmount, data.currency)}</span>
           </div>
           {data.discount ? (
-            <div className="flex justify-between text-sm text-slate-500">
+            <div className="flex justify-between text-sm text-[#64748b]">
               <span>Discount</span>
               <span>-{formatMoney(data.discount, data.currency)}</span>
             </div>

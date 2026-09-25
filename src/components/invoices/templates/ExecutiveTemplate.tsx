@@ -89,7 +89,7 @@ export function ExecutiveTemplate({
           </thead>
           <tbody>
             {data.lineItems.map((item) => (
-              <tr key={item.id} className="border-b border-slate-200">
+              <tr key={item.id} className="border-b border-[#e2e8f0]">
                 <td className="px-3 py-3 text-[var(--c-primary)]">{item.description}</td>
                 <td className="px-3 py-3 text-right text-[var(--c-secondary)]">{item.quantity}</td>
                 <td className="px-3 py-3 text-right text-[var(--c-secondary)]">
@@ -125,7 +125,7 @@ export function ExecutiveTemplate({
         </div>
 
         {data.paymentTerms ? (
-          <p className="mt-10 border-t border-slate-200 pt-4 text-xs text-[var(--c-secondary)]">
+          <p className="mt-10 border-t border-[#e2e8f0] pt-4 text-xs text-[var(--c-secondary)]">
             {data.paymentTerms}
           </p>
         ) : null}
