@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Timesheet — Clockwork',
 };
 
-/** Everything that is not the clock: totals, the log, filters, exports. */
+/** Timesheets, time invested tracker, and invoice exporter at the bottom */
 export default function TimesheetPage() {
   return <WorkspaceScreen />;
 }

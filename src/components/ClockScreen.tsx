@@ -13,10 +13,6 @@ import { formatRate } from '@/lib/time/rates';
 /**
  * The clock, alone on its own screen.
  *
- * Everything here answers one of three questions: am I on the clock, for how
- * long, and for whom. Totals, history and invoicing deliberately live one tap
- * away on /timesheet — a screen you look at ten times a day should not ask you
- * to find the button among twenty others.
  */
 export function ClockScreen() {
   const {
