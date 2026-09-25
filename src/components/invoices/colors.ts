@@ -136,6 +136,25 @@ export const TEMPLATE_COLOR_FIELDS: Record<TemplateId, ColorField[]> = {
  * Plain sRGB luminance, not perceptually-accurate WCAG contrast — overkill
  * for a two-way black/white choice on an invoice banner.
  */
+/**
+ * Applies opacity to a hex color as an rgba() string.
+ *
+ * Templates need this instead of Tailwind's `/NN` opacity-modifier syntax
+ * (e.g. `bg-[var(--c-x)]/40`) wherever the color comes from a CSS variable:
+ * Tailwind v4 compiles that syntax to `color-mix(in oklab, ...)`, which
+ * html2canvas (used for the real PDF export) can't parse and fails on —
+ * a plain rgba() string has no such issue and renders identically.
+ */
+export function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return hex;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function pickReadableText(hex: string): string {
   const clean = hex.replace('#', '');
   const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;

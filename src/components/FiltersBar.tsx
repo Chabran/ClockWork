@@ -9,8 +9,10 @@ import { ROUNDING_LABELS } from '@/lib/time/rounding';
 import { ROUNDING_RULES, SORT_ORDERS, type RoundingRule, type SortOrder } from '@/lib/types';
 import { exportCsv } from '@/lib/export/csv';
 import { groupIntoInvoices } from '@/lib/export/invoices';
-import { exportInvoices } from '@/lib/export/pdf';
+import { exportTemplatedInvoices } from '@/lib/export/templated-pdf';
 import { InvoiceExportDialog } from '@/components/InvoiceExportDialog';
+import type { ColorScheme } from '@/components/invoices/colors';
+import type { InvoiceData, TemplateId } from '@/types/invoice';
 import type { EnrichedEntry } from '@/lib/types';
 
 /**
@@ -53,7 +55,6 @@ export function FiltersBar({
   } = useTracker();
   const [isOpen, setIsOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Close on outside click and on Escape — the two things every popover owes
@@ -126,31 +127,13 @@ export function FiltersBar({
 
   const drafts = groupIntoInvoices(exportEntries);
 
-  /**
-   * The dialog exists for two different reasons, and either one is enough to
-   * show it:
-   *  - there's more than one invoice draft, so "combined vs. separate" and
-   *    "which ones" are real questions with more than one answer, or
-   *  - the user hand-picked more than one row, so exporting is a deliberate
-   *    enough act that it deserves a look before it downloads, even if those
-   *    rows happen to collapse into a single draft (same client, same project).
-   * Neither is true — no selection, and the filtered view is already just one
-   * invoice — there's nothing to choose, so it downloads immediately.
-   */
-  const hasMultiRowSelection = selectionActive && selectedCount > 1;
-  const shouldConfirmExport = drafts.length > 1 || hasMultiRowSelection;
+  // Every export now stops at this dialog — which invoices, how they're
+  // bundled, and which template (with its colors) renders them are all
+  // decided here, with a live preview, before anything downloads.
+  const handleExportPdf = () => setIsExportDialogOpen(true);
 
-  const handleExportPdf = async () => {
-    if (shouldConfirmExport) {
-      setIsExportDialogOpen(true);
-      return;
-    }
-    setIsExporting(true);
-    try {
-      await exportInvoices(drafts, { settings, rule: settings.roundingRule, periodLabel }, 'combined');
-    } finally {
-      setIsExporting(false);
-    }
+  const handleTemplateExport = async (items: InvoiceData[], templateId: TemplateId, colors: ColorScheme) => {
+    await exportTemplatedInvoices(items, templateId, colors);
   };
 
   return (
@@ -351,10 +334,10 @@ export function FiltersBar({
         <Button
           variant="primary"
           onClick={handleExportPdf}
-          disabled={exportEntries.length === 0 || isExporting}
+          disabled={exportEntries.length === 0}
           className="px-3 py-1.5 text-xs"
         >
-          {isExporting ? 'Building…' : shouldConfirmExport ? 'Export PDF…' : 'Export PDF'}
+          Export PDF…
         </Button>
       </div>
 
@@ -363,8 +346,8 @@ export function FiltersBar({
         onClose={() => setIsExportDialogOpen(false)}
         drafts={drafts}
         settings={settings}
-        rule={settings.roundingRule}
         periodLabel={periodLabel}
+        onExport={handleTemplateExport}
       />
     </div>
   );

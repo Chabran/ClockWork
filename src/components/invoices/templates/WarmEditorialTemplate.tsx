@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { InvoiceData } from '@/types/invoice';
 import { formatInvoiceDate, formatMoney } from '@/components/invoices/format';
-import { WARM_EDITORIAL_COLORS, type ColorScheme } from '@/components/invoices/colors';
+import { WARM_EDITORIAL_COLORS, hexToRgba, type ColorScheme } from '@/components/invoices/colors';
 
 /** Template 5 — The Warm Editorial: terracotta, cream, serif headings, pill rows. */
 export function WarmEditorialTemplate({
@@ -55,7 +55,8 @@ export function WarmEditorialTemplate({
         {data.lineItems.map((item) => (
           <div
             key={item.id}
-            className="mb-2 flex items-center justify-between rounded-xl bg-[var(--c-cardSurface)]/60 p-4"
+            className="mb-2 flex items-center justify-between rounded-xl p-4"
+            style={{ backgroundColor: hexToRgba(c.cardSurface, 0.6) }}
           >
             <div>
               <p className="font-medium">{item.description}</p>
