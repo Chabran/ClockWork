@@ -13,6 +13,7 @@ import { createEmptyState } from '@/lib/defaults';
 import { migrate } from '@/lib/storage/migrations';
 import { recentJobTitles, sortEntries } from '@/lib/selectors';
 import type { EnrichedEntry } from '@/lib/types';
+import { groupIntoInvoices, invoiceFileName, invoiceLabel } from '@/lib/export/invoices';
 import {
   DEFAULT_WORK_SCHEDULE,
   LEGACY_WORK_SCHEDULE,
@@ -458,4 +459,65 @@ test('titles: the limit caps the picker', () => {
   const many = Array.from({ length: 30 }, (_, i) => titled(String(i), `Job ${i}`));
   assert.equal(recentJobTitles(many).length, 12);
   assert.equal(recentJobTitles(many, 3).length, 3);
+});
+
+/* ------------------------------- invoices -------------------------------- */
+
+const billed = (id: string, clientId: string, projectId: string | null = null, currency = 'USD') =>
+  ({ id, clientId, clientName: clientId, projectId, projectName: projectId, currency }) as unknown as EnrichedEntry;
+
+test('invoices: no entries means no invoices', () => {
+  assert.deepEqual(groupIntoInvoices([]), []);
+});
+
+test('invoices: one client and project becomes one invoice holding every entry', () => {
+  const drafts = groupIntoInvoices([billed('a', 'acme'), billed('b', 'acme')]);
+  assert.equal(drafts.length, 1);
+  assert.equal(ids(drafts[0]!.entries), 'ab');
+});
+
+test('invoices: clients keep the order they were first registered in', () => {
+  const drafts = groupIntoInvoices([
+    billed('a', 'acme'),
+    billed('b', 'globex'),
+    billed('c', 'acme'),
+  ]);
+  assert.deepEqual(drafts.map((d) => d.clientName), ['acme', 'globex']);
+  assert.equal(ids(drafts[0]!.entries), 'ac');
+  assert.equal(ids(drafts[1]!.entries), 'b');
+});
+
+test('invoices: one client in two currencies splits into two invoices', () => {
+  const drafts = groupIntoInvoices([
+    billed('a', 'acme', null, 'USD'),
+    billed('b', 'acme', null, 'EUR'),
+  ]);
+  assert.deepEqual(drafts.map((d) => d.currency), ['USD', 'EUR']);
+});
+
+test('invoices: one client with two projects becomes two invoices', () => {
+  const drafts = groupIntoInvoices([billed('a', 'acme', 'web'), billed('b', 'acme', 'brand')]);
+  assert.deepEqual(drafts.map((d) => d.projectName), ['web', 'brand']);
+});
+
+test('invoices: never mutates the array it was given', () => {
+  const input = [billed('a', 'acme'), billed('b', 'globex')];
+  groupIntoInvoices(input);
+  assert.equal(ids(input), 'ab');
+});
+
+test('invoices: the label names the project only when there is one', () => {
+  const [withProject, withoutProject] = groupIntoInvoices([
+    billed('a', 'Acme', 'Website'),
+    billed('b', 'Globex'),
+  ]);
+  assert.equal(invoiceLabel(withProject!), 'Acme · Website');
+  assert.equal(invoiceLabel(withoutProject!), 'Globex');
+});
+
+test('invoices: file names are safe on every OS', () => {
+  assert.equal(invoiceFileName('Acme · Website', '2026-09-25'), 'invoice-acme-website-2026-09-25.pdf');
+  assert.equal(invoiceFileName('Café Müller, Inc.', '2026-09-25'), 'invoice-cafe-muller-inc-2026-09-25.pdf');
+  assert.equal(invoiceFileName(null, '2026-09-25'), 'invoice-2026-09-25.pdf');
+  assert.equal(invoiceFileName('···', '2026-09-25'), 'invoice-2026-09-25.pdf');
 });

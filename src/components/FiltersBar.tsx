@@ -8,7 +8,8 @@ import { SORT_LABELS } from '@/lib/selectors';
 import { ROUNDING_LABELS } from '@/lib/time/rounding';
 import { ROUNDING_RULES, SORT_ORDERS, type RoundingRule, type SortOrder } from '@/lib/types';
 import { exportCsv } from '@/lib/export/csv';
-import { exportPdf } from '@/lib/export/pdf';
+import { groupIntoInvoices } from '@/lib/export/invoices';
+import { exportInvoices } from '@/lib/export/pdf';
 
 /**
  * Filter, sort and export — collapsed into one button.
@@ -110,13 +111,11 @@ export function FiltersBar() {
   const handlePdf = async () => {
     setIsExporting(true);
     try {
-      await exportPdf(filteredEntries, {
-        settings,
-        rule: settings.roundingRule,
-        periodLabel,
-        clientName:
-          filters.clientId === 'all' ? 'All clients' : clientName(filters.clientId),
-      });
+      await exportInvoices(
+        groupIntoInvoices(filteredEntries),
+        { settings, rule: settings.roundingRule, periodLabel },
+        'combined',
+      );
     } finally {
       setIsExporting(false);
     }
