@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { InvoiceData } from '@/types/invoice';
 import { formatInvoiceDate, formatMoney } from '@/components/invoices/format';
-import { LUXE_GOLD_COLORS, pickReadableText, type ColorScheme } from '@/components/invoices/colors';
+import { LUXE_GOLD_COLORS, hexToRgba, pickReadableText, type ColorScheme } from '@/components/invoices/colors';
 
 /** Template 10 — The Luxe Gold: high-end, espresso & gold, double-frame border. */
 export function LuxeGoldTemplate({
@@ -84,7 +84,10 @@ export function LuxeGoldTemplate({
               <span>-{formatMoney(data.discount, data.currency)}</span>
             </div>
           ) : null}
-          <div className="mt-3 flex items-baseline justify-between border-t border-[var(--c-accent)]/40 pt-3">
+          <div
+            className="mt-3 flex items-baseline justify-between pt-3"
+            style={{ borderTop: `1px solid ${hexToRgba(c.accent, 0.4)}` }}
+          >
             <span className="text-xs tracking-widest uppercase">Total due</span>
             <span className="font-serif text-2xl text-[var(--c-accent)]">{formatMoney(data.total, data.currency)}</span>
           </div>

@@ -94,6 +94,15 @@ async function renderInvoiceToCanvas(
 
   try {
     const target = (container.firstElementChild as HTMLElement) ?? container;
+    // Rare timing race under heavy load: the browser can still report the
+    // freshly-rendered element as 0x0 here even after the paint waits above,
+    // which would rasterize an empty canvas and produce a broken PDF page.
+    // Give layout a few more frames to catch up before giving up on it.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const { width, height } = target.getBoundingClientRect();
+      if (width > 0 && height > 0) break;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
     return await html2canvas(target, {
       scale: 2,
       backgroundColor: '#ffffff',
